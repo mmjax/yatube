@@ -94,7 +94,7 @@ class PostPagesTests(TestCase):
     def test_group_on_group_page(self):
         response = self.author.get(GROUP_URL)
         self.assertEqual(response.context['group'], self.group)
-    
+
     def test_comments_on_post_detail_page(self):
         """Проверка, что комментарии доступны на странице поста"""
         comment_text = 'Тестовый комментарий'
