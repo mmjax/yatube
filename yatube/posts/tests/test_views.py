@@ -117,6 +117,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.post.id, self.post.id)
 
     def test_cache_on_index_page(self):
+        Post.objects.all().delete()
         cache.clear()
         response = self.author.get(INDEX_URL)
         Post.objects.create(

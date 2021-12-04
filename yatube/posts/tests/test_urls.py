@@ -110,6 +110,17 @@ class StaticURLTests(TestCase):
             [CREATE_POST_URL,
              self.guest,
              f'{AUTHORIZATION_PAGE}?next={CREATE_POST_URL}'],
+            [self.ADD_COMMENT_URL,
+             self.guest,
+             f'{AUTHORIZATION_PAGE}?next={self.ADD_COMMENT_URL}'],
+            [self.PROFILE_FOLLOW_URL,
+             self.guest,
+             f'{AUTHORIZATION_PAGE}?next={self.PROFILE_FOLLOW_URL}'],
+            [self.PROFILE_UNFOLLOW_URL,
+             self.guest,
+             f'{AUTHORIZATION_PAGE}?next={self.PROFILE_UNFOLLOW_URL}'],
+            [self.PROFILE_FOLLOW_URL, self.author, PROFILE_URL],
+            [self.PROFILE_UNFOLLOW_URL, self.author, PROFILE_URL]
         ]
         for url, client, redirect_url in variants_of_redirection:
             with self.subTest(url=url, redirect_url=redirect_url):

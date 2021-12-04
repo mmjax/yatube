@@ -54,7 +54,7 @@ def post_detail(request, post_id):
 
 @login_required
 def post_create(request):
-    form = PostForm(request.POST or None, request.FILES)
+    form = PostForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         form.instance.author = request.user
         form.save()
@@ -120,5 +120,6 @@ def profile_unfollow(request, username):
     get_object_or_404(
         Follow,
         user=request.user,
+        author__username=username
     ).delete()
     return redirect('posts:profile', username=username)
