@@ -14,14 +14,6 @@ PROFILE_URL = reverse('posts:profile', kwargs={'username': USERNAME})
 CREATE_POST_URL = reverse('posts:post_create')
 AUTHORIZATION_PAGE = reverse('users:login')
 FOLLOW_INDEX_URL = reverse('posts:follow_index')
-PROFILE_UNFOLLOW_URL = reverse(
-    'posts:profile_unfollow',
-    kwargs={'username': USERNAME}
-)
-PROFILE_FOLLOW_URL = reverse(
-    'posts:profile_follow',
-    kwargs={'username': USERNAME}
-)
 AUTHOR = 'Author'
 
 
@@ -54,6 +46,18 @@ class StaticURLTests(TestCase):
             'posts:post_detail',
             kwargs={'post_id': cls.post.id}
         )
+        cls.ADD_COMMENT_URL = reverse(
+            'posts:add_comment',
+            kwargs={'post_id': cls.post.id}
+        )
+        cls.PROFILE_UNFOLLOW_URL = reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': USERNAME}
+        )
+        cls.PROFILE_FOLLOW_URL = reverse(
+            'posts:profile_follow',
+            kwargs={'username': USERNAME}
+        )
 
     def test_pages_for_guest_client(self):
         variants_of_pages = [
@@ -69,10 +73,15 @@ class StaticURLTests(TestCase):
             [self.POST_EDIT_URL, self.guest, 302],
             [FOLLOW_INDEX_URL, self.author, 200],
             [FOLLOW_INDEX_URL, self.guest, 302],
-            [PROFILE_FOLLOW_URL, self.author, 302],
-            [PROFILE_FOLLOW_URL, self.guest, 302],
-            [PROFILE_UNFOLLOW_URL, self.author, 302],
-            [PROFILE_UNFOLLOW_URL, self.guest, 302]
+            [self.PROFILE_FOLLOW_URL, self.author, 302],
+            [self.PROFILE_FOLLOW_URL, self.guest, 302],
+            [self.PROFILE_UNFOLLOW_URL, self.author, 302],
+            [self.PROFILE_UNFOLLOW_URL, self.guest, 302],
+            [FOLLOW_INDEX_URL, self.another, 200],
+            [self.PROFILE_FOLLOW_URL, self.another, 302],
+            [self.ADD_COMMENT_URL, self.author, 302],
+            [self.ADD_COMMENT_URL, self.another, 302],
+            [self.ADD_COMMENT_URL, self.guest, 302],
         ]
         for url, client, status_code in variants_of_pages:
             with self.subTest(url=url, clent=client):
@@ -86,6 +95,7 @@ class StaticURLTests(TestCase):
             self.POST_DETAIL_URL: 'posts/post_detail.html',
             self.POST_EDIT_URL: 'posts/create_post.html',
             CREATE_POST_URL: 'posts/create_post.html',
+            FOLLOW_INDEX_URL: 'posts/follow.html',
         }
         for adress, template in cases.items():
             with self.subTest(adress=adress):
@@ -99,7 +109,7 @@ class StaticURLTests(TestCase):
              f'{AUTHORIZATION_PAGE}?next={self.POST_EDIT_URL}'],
             [CREATE_POST_URL,
              self.guest,
-             f'{AUTHORIZATION_PAGE}?next={CREATE_POST_URL}']
+             f'{AUTHORIZATION_PAGE}?next={CREATE_POST_URL}'],
         ]
         for url, client, redirect_url in variants_of_redirection:
             with self.subTest(url=url, redirect_url=redirect_url):

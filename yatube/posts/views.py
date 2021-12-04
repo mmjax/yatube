@@ -48,7 +48,6 @@ def post_detail(request, post_id):
         'form': form,
         'comments': comments,
         'post': post,
-        'author': post.author,
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -118,10 +117,8 @@ def profile_follow(request, username):
 
 @login_required
 def profile_unfollow(request, username):
-    author = get_object_or_404(User, username=username)
     get_object_or_404(
         Follow,
         user=request.user,
-        author__username=author
     ).delete()
     return redirect('posts:profile', username=username)

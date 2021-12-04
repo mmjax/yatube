@@ -117,6 +117,8 @@ class Follow(models.Model):
                 name='uniq_followers'
             )
         ]
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        return self.author
+        return f'{self.author}'

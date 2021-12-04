@@ -64,14 +64,16 @@ class PostPagesTests(TestCase):
         )
 
     def test_pages_shows_correct_context(self):
+        Follow.objects.create(user=self.follower, author=self.user)
         urls = [
             INDEX_URL,
             GROUP_URL,
             PROFILE_URL,
             self.POST_DEATAIL_URL,
+            FOLLOW_INDEX_URL
         ]
         for url in urls:
-            response = self.author.get(url)
+            response = self.follow_client.get(url)
             if 'page_obj' in response.context:
                 self.assertEqual(len(response.context['page_obj']), 1)
                 post = response.context['page_obj'][0]
@@ -96,18 +98,23 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['group'], self.group)
 
     def test_comments_on_post_detail_page(self):
-        """Проверка, что комментарии доступны на странице поста"""
+        ids = set(Comment.objects.all().values_list('id', flat=True))
         comment_text = 'Тестовый комментарий'
         Comment.objects.create(
             author=self.user,
             text=comment_text,
             post=self.post,
         )
+        comments = Comment.objects.exclude(id__in=ids)
+        self.assertEqual(len(comments), 1)
         reverse_view = reverse('posts:post_detail',
                                kwargs={'post_id': self.post.id})
         response = self.author.get(
-            reverse_view).context['post'].comments.all()[0].text
-        self.assertEqual(response, comment_text)
+            reverse_view).context['post'].comments.all()[0]
+        self.assertEqual(response.text, comment_text)
+        self.assertEqual(response.author, self.user)
+        self.assertEqual(response.post, self.post)
+        self.assertEqual(response.post.id, self.post.id)
 
     def test_cache_on_index_page(self):
         cache.clear()
@@ -124,27 +131,23 @@ class PostPagesTests(TestCase):
 
     def test_users_can_unfollow(self):
         Follow.objects.create(author=self.user, user=self.follower)
-        response = self.follow_client.post(
+        response = self.follow_client.get(
             PROFILE_UNFOLLOW_URL,
             follow=True
         )
-        self.assertRedirects(response, PROFILE_URL)
-        followings = Follow.objects.all()
-        self.assertEqual(len(followings), 0)
+        self.assertEqual(False, response.context['following'])
 
     def test_users_can_follow(self):
-        response = self.follow_client.post(
+        response = self.follow_client.get(
             PROFILE_FOLLOW_URL,
             follow=True
         )
-        self.assertRedirects(response, PROFILE_URL)
-        followings = Follow.objects.all()
-        self.assertEqual(len(followings), 1)
+        self.assertEqual(True, response.context['following'])
 
-    def test_subscription_on_follow_page(self):
+    def test_post_on_other_follow_page(self):
         Follow.objects.create(author=self.user, user=self.follower)
-        response = self.follow_client.get(FOLLOW_INDEX_URL)
-        self.assertEqual(response.context['page_obj'][0].author, self.user)
+        response = self.author.get(FOLLOW_INDEX_URL)
+        self.assertNotIn(self.post, response.context['page_obj'])
 
 
 class PaginatorViewsTest(TestCase):

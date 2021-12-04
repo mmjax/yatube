@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from posts.forms import PostForm
-from posts.models import Post, Group, User
+from posts.models import Post, Group, User, Comment
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -22,6 +22,14 @@ TEST_TITLE2 = 'Тестовая группа2'
 TEST_DESCRIPTION2 = 'Тестовое описание группы 2'
 CREATE_POST_URL = reverse('posts:post_create')
 PROFILE_URL = reverse('posts:profile', kwargs={'username': USERNAME})
+SMALL_GIF = (
+    b'\x47\x49\x46\x38\x39\x61\x02\x00'
+    b'\x01\x00\x80\x00\x00\x00\x00\x00'
+    b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+    b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+    b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+    b'\x0A\x00\x3B'
+)
 
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
@@ -49,18 +57,9 @@ class PostFormTests(TestCase):
             group=cls.group,
         )
         cls.form = PostForm()
-
-        cls.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
         cls.uploaded = SimpleUploadedFile(
             name='small.gif',
-            content=cls.small_gif,
+            content=SMALL_GIF,
             content_type='image/gif'
         )
 
@@ -68,10 +67,14 @@ class PostFormTests(TestCase):
             'posts:post_edit',
             kwargs={'post_id': cls.post.id}
         )
-        cls.POST_DETAIL = reverse('posts:post_detail',
-                                  kwargs={'post_id': cls.post.id})
-        cls.ADD_COMMENT_URL = reverse('posts:add_comment',
-                                      kwargs={'post_id': cls.post.id})
+        cls.POST_DETAIL = reverse(
+            'posts:post_detail',
+            kwargs={'post_id': cls.post.id}
+        )
+        cls.ADD_COMMENT_URL = reverse(
+            'posts:add_comment',
+            kwargs={'post_id': cls.post.id}
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -103,7 +106,7 @@ class PostFormTests(TestCase):
         posts_count = Post.objects.count()
         form_data = {
             'text': POST_EDIT_TEXT,
-            'group': self.group2.id
+            'group': self.group2.id,
         }
         response = self.author.post(
             self.POST_EDIT,
@@ -135,6 +138,7 @@ class PostFormTests(TestCase):
                     self.assertIsInstance(form_field, expected)
 
     def test_comment_of_posts(self):
+        ids = set(Comment.objects.all().values_list('id', flat=True))
         form_data = {
             'text': 'Тестовый комментарий',
         }
@@ -143,6 +147,10 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True
         )
-        comment = self.author.get(self.POST_DETAIL).context['comments'][0]
+        comments = Comment.objects.exclude(id__in=ids)
+        self.assertEqual(len(comments), 1)
+        comment = comments.get()
         self.assertRedirects(response, self.POST_DETAIL)
         self.assertEqual(comment.text, form_data['text'])
+        self.assertEqual(comment.author, self.user)
+        self.assertEqual(comment.post, self.post)
