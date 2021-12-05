@@ -140,7 +140,9 @@ class PostPagesTests(TestCase):
             PROFILE_FOLLOW_URL,
             follow=True
         )
-        self.assertEqual(Follow.objects.exists(), True)
+        self.assertEqual(Follow.objects.filter(
+            user=self.follower,
+            author=self.user).exists(), True)
 
     def test_post_on_other_follow_page(self):
         response = self.author.get(FOLLOW_INDEX_URL)
