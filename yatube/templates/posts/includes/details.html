@@ -5,12 +5,14 @@
   <li>
     Дата публикации: {{ post.pub_date|date:"d E Y" }}
   </li>
-{% if post_detail %}
+{% if not group_list %}
   {% if post.group %}     
     <li>
       <a href="{% url 'posts:group_list' post.group.slug %}">#{{post.group}}</a>
     </li>
   {% endif %}
+{% endif %}
+{%if post_detail%}
   <li>
     Всего постов автора:  <span >{{ post.author.posts.count }}</span>
   </li>
@@ -21,11 +23,9 @@
   <img class="card-img my-2" src="{{ im.url }}">
 {% endthumbnail %}
 <p>{{ post.text|linebreaks }}</p>
-{% if profile %}
+{% if not post_detail%}
   <p><a href="{% url 'posts:post_detail' post.pk %}">подробная информация </a></p>
 {% endif %}
-{%if not post_detail %}
-  {% if post.group %}
-    <a href="{% url 'posts:group_list' post.group.slug %}">#{{post.group}}</a>
-  {% endif %}
+{% if post_detail%}
+  <p><a href="{% url 'posts:post_edit' post.pk %}">редактировать пост </a></p>
 {% endif %}

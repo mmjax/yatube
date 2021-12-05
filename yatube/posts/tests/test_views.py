@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.shortcuts import get_object_or_404
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -141,7 +142,12 @@ class PostPagesTests(TestCase):
             follow=True
         )
         self.assertEqual(len(Follow.objects.all()), 1)
-        self.assertEqual(self.follower, Follow.objects.get().user)
+        follow = get_object_or_404(
+            Follow,
+            user=self.follower,
+            author=self.user
+        )
+        self.assertEqual(self.follower, follow.user)
 
     def test_post_on_other_follow_page(self):
         response = self.author.get(FOLLOW_INDEX_URL)

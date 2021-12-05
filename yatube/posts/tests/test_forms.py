@@ -109,7 +109,10 @@ class PostFormTests(TestCase):
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.user)
-        self.assertEqual(post.image, f'posts/{FIRST_GIF}')
+        self.assertEqual(
+            post.image,
+            f'{Post.image.field.upload_to}{FIRST_GIF}'
+        )
 
     def test_edit_post(self):
         uploaded = SimpleUploadedFile(
@@ -185,7 +188,7 @@ class PostFormTests(TestCase):
         )
         self.assertRedirects(
             response,
-            AUTHORIZATION_URL + response.context['next']
+            AUTHORIZATION_URL + CREATE_POST_URL
         )
         created_posts = Post.objects.exclude(id__in=ids)
         self.assertEqual(len(created_posts), 0)
@@ -215,7 +218,7 @@ class PostFormTests(TestCase):
             'image': uploaded
         }
         cases = {
-            self.guest: f'/auth/login/?next={self.POST_EDIT}',
+            self.guest: f'{AUTHORIZATION_URL}{self.POST_EDIT}',
             self.another: self.POST_DETAIL
         }
         for client, url in cases.items():
