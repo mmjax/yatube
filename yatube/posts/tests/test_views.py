@@ -94,12 +94,12 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['author'], self.user)
 
     def test_group_on_group_page(self):
-        response = self.author.get(GROUP_URL)
-        self.assertEqual(response.context['group'], self.group)
-        self.assertEqual(response.context['group'].title, self.group.title)
-        self.assertEqual(response.context['group'].slug, self.group.slug)
+        response = self.author.get(GROUP_URL).context['group']
+        self.assertEqual(response, self.group)
+        self.assertEqual(response.title, self.group.title)
+        self.assertEqual(response.slug, self.group.slug)
         self.assertEqual(
-            response.context['group'].description,
+            response.description,
             self.group.description
         )
 
@@ -111,7 +111,7 @@ class PostPagesTests(TestCase):
             post=self.post,
         )
         response = self.author.get(self.POST_DEATAIL_URL)
-        self.assertEqual(len(response.context['comments']), 1)
+        self.assertEqual(len(response.context['post'].comments.all()), 1)
         comment = response.context['post'].comments.all()[0]
         self.assertEqual(comment.text, comment_text)
         self.assertEqual(comment.author, self.user)
@@ -121,10 +121,6 @@ class PostPagesTests(TestCase):
         cache.clear()
         response = self.author.get(INDEX_URL)
         Post.objects.all().delete()
-        Post.objects.create(
-            text=TEST_TEXT,
-            author=self.user,
-        )
         second_response = self.author.get(INDEX_URL)
         self.assertEqual(response.content, second_response.content)
         cache.clear()
@@ -145,6 +141,7 @@ class PostPagesTests(TestCase):
             follow=True
         )
         self.assertEqual(len(Follow.objects.all()), 1)
+        self.assertEqual(self.follower, Follow.objects.get().user)
 
     def test_post_on_other_follow_page(self):
         response = self.author.get(FOLLOW_INDEX_URL)

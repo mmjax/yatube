@@ -22,6 +22,7 @@ TEST_SLUG2 = 'test_slug2'
 TEST_TITLE2 = 'Тестовая группа2'
 TEST_DESCRIPTION2 = 'Тестовое описание группы 2'
 CREATE_POST_URL = reverse('posts:post_create')
+AUTHORIZATION_URL = reverse('users:login') + '?next='
 PROFILE_URL = reverse('posts:profile', kwargs={'username': USERNAME})
 GROUP2_URL = reverse('posts:group_list', kwargs={'slug': TEST_SLUG2})
 FIRST_GIF = 'small.gif'
@@ -128,7 +129,10 @@ class PostFormTests(TestCase):
         )
         post = response.context['post']
         self.assertRedirects(response, self.POST_DETAIL)
-        self.assertEqual(post.image, f'posts/{SECOND_GIF}')
+        self.assertEqual(
+            post.image,
+            f'{Post.image.field.upload_to}{SECOND_GIF}'
+        )
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.post.author)
@@ -181,7 +185,7 @@ class PostFormTests(TestCase):
         )
         self.assertRedirects(
             response,
-            '/auth/login/?next=' + response.context['next']
+            AUTHORIZATION_URL + response.context['next']
         )
         created_posts = Post.objects.exclude(id__in=ids)
         self.assertEqual(len(created_posts), 0)
@@ -199,7 +203,7 @@ class PostFormTests(TestCase):
         comments = Comment.objects.exclude(id__in=ids)
         self.assertEqual(len(comments), 0)
 
-    def test_guest_edit_post(self):
+    def test_not_author_edit_post(self):
         uploaded = SimpleUploadedFile(
             name=THIRD_GIF,
             content=SMALL_GIF,
@@ -211,7 +215,7 @@ class PostFormTests(TestCase):
             'image': uploaded
         }
         cases = {
-            self.guest: '/auth/login/?next=',
+            self.guest: f'/auth/login/?next={self.POST_EDIT}',
             self.another: self.POST_DETAIL
         }
         for client, url in cases.items():
@@ -221,7 +225,9 @@ class PostFormTests(TestCase):
                     data=form_data,
                     follow=True
                 )
-                if (client == self.guest):
-                    url += response.context['next']
                 self.assertRedirects(response, url)
-                self.assertEqual(Post.objects.get().group, self.post.group)
+                post = Post.objects.get(pk=self.post.id)
+                self.assertEqual(post.group, self.post.group)
+                self.assertEqual(post.author, self.post.author)
+                self.assertEqual(post.text, self.post.text)
+                self.assertEqual(post.image, self.post.image)

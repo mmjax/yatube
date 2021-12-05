@@ -5,9 +5,5 @@
 {%endblock%}
 {% block content %}
   {% include 'posts/includes/details.html' with post_detail=True%}
-  {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-    <img class="card-img my-2" src="{{ im.url }}">
-  {% endthumbnail %}
-  <p>{{ post.text|linebreaks }}</p>
-  {% include 'posts/includes/comments.html' %}
+  {% include 'posts/includes/comments.html' with post_detail=True%}
 {% endblock %}
