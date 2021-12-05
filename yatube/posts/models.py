@@ -121,4 +121,7 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        return f'{self.author}'
+        return (
+            f'author: {self.author}',
+            f'user: {self.user}'
+        )

@@ -4,20 +4,7 @@
     Пост {{ post.text|truncatechars:30 }}
 {%endblock%}
 {% block content %}
-  <li>
-    Дата публикации: {{ post.pub_date|date:"d E Y" }}
-  </li>
-  {% if post.group %}     
-    <li>
-      <a href="{% url 'posts:group_list' post.group.slug %}">#{{post.group}}</a>
-    </li>
-  {% endif %}
-  <li>
-    Автор: <a href="{% url 'posts:profile' post.author.username %}">{{ post.author.get_full_name }}</a>
-  </li>
-  <li>
-    Всего постов автора:  <span >{{ post.author.posts.count }}</span>
-  </li>
+  {% include 'posts/includes/details.html' with post_detail=True%}
   {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
     <img class="card-img my-2" src="{{ im.url }}">
   {% endthumbnail %}

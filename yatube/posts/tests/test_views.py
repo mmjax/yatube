@@ -96,30 +96,31 @@ class PostPagesTests(TestCase):
     def test_group_on_group_page(self):
         response = self.author.get(GROUP_URL)
         self.assertEqual(response.context['group'], self.group)
+        self.assertEqual(response.context['group'].title, self.group.title)
+        self.assertEqual(response.context['group'].slug, self.group.slug)
+        self.assertEqual(
+            response.context['group'].description,
+            self.group.description
+        )
 
     def test_comments_on_post_detail_page(self):
-        ids = set(Comment.objects.all().values_list('id', flat=True))
         comment_text = 'Тестовый комментарий'
         Comment.objects.create(
             author=self.user,
             text=comment_text,
             post=self.post,
         )
-        comments = Comment.objects.exclude(id__in=ids)
-        self.assertEqual(len(comments), 1)
-        reverse_view = reverse('posts:post_detail',
-                               kwargs={'post_id': self.post.id})
-        response = self.author.get(
-            reverse_view).context['post'].comments.all()[0]
-        self.assertEqual(response.text, comment_text)
-        self.assertEqual(response.author, self.user)
-        self.assertEqual(response.post, self.post)
-        self.assertEqual(response.post.id, self.post.id)
+        response = self.author.get(self.POST_DEATAIL_URL)
+        self.assertEqual(len(response.context['comments']), 1)
+        comment = response.context['post'].comments.all()[0]
+        self.assertEqual(comment.text, comment_text)
+        self.assertEqual(comment.author, self.user)
+        self.assertEqual(comment.post, self.post)
 
     def test_cache_on_index_page(self):
-        Post.objects.all().delete()
         cache.clear()
         response = self.author.get(INDEX_URL)
+        Post.objects.all().delete()
         Post.objects.create(
             text=TEST_TEXT,
             author=self.user,
@@ -132,21 +133,20 @@ class PostPagesTests(TestCase):
 
     def test_users_can_unfollow(self):
         Follow.objects.create(author=self.user, user=self.follower)
-        response = self.follow_client.get(
+        self.follow_client.get(
             PROFILE_UNFOLLOW_URL,
             follow=True
         )
-        self.assertEqual(False, response.context['following'])
+        self.assertEqual(len(Follow.objects.all()), 0)
 
     def test_users_can_follow(self):
-        response = self.follow_client.get(
+        self.follow_client.get(
             PROFILE_FOLLOW_URL,
             follow=True
         )
-        self.assertEqual(True, response.context['following'])
+        self.assertEqual(len(Follow.objects.all()), 1)
 
     def test_post_on_other_follow_page(self):
-        Follow.objects.create(author=self.user, user=self.follower)
         response = self.author.get(FOLLOW_INDEX_URL)
         self.assertNotIn(self.post, response.context['page_obj'])
 

@@ -1,0 +1,19 @@
+<ul> 
+  <li>
+    Автор:<a href="{% url 'posts:profile' post.author.username %}">{{ post.author.get_full_name }}</a>
+  </li>
+  <li>
+    Дата публикации: {{ post.pub_date|date:"d E Y" }}
+  </li>
+{% if post_detail %}
+  {% if post.group %}     
+    <li>
+      <a href="{% url 'posts:group_list' post.group.slug %}">#{{post.group}}</a>
+    </li>
+  {% endif %}
+  <li>
+    Всего постов автора:  <span >{{ post.author.posts.count }}</span>
+  </li>
+  
+{%endif%}
+</ul>
